@@ -25,7 +25,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
   const [cart, setCart] = useState<Product[]>(() => {
     const storagedCart = localStorage.getItem('@RocketShoes:cart')
 
-
     if (storagedCart) {
       console.log(JSON.parse(storagedCart))
       return JSON.parse(storagedCart);
@@ -36,12 +35,32 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const addProduct = async (productId: number) => {
     try {
-      const response = await api.get('/products/' + String(productId))
-      const newCart = [...cart, response.data]
+      if (cart.map(product => product.id).includes(productId)) {
+        const newAmount = cart.filter(
+            product => product.id === productId
+          )[0].amount + 1
+        const amountInStock = await (await api.get('/stock/' + String(productId))).data
+
+        if (newAmount > amountInStock.amount) {
+          toast.error('Quantidade solicitada fora de estoque');
+          return
+        }
+
+        var newCart = cart.map(product => (
+          product.id === productId ? {...product, amount: newAmount} : product
+          ))
+
+      } else {
+        const response = await api.get('/products/' + String(productId))
+        const newProduct : Product = {...response.data, amount: 1}
+        var newCart = [...cart, newProduct]
+      }
+
       setCart(newCart)
       localStorage.setItem('@RocketShoes:cart', JSON.stringify(newCart))
+
     } catch {
-      // TODO
+      toast.error("Erro na adição do produto")
     }
   };
 
@@ -53,7 +72,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       setCart(newCart);
       localStorage.setItem('@RocketShoes:cart', JSON.stringify(newCart));
     } catch {
-      // TODO
+      toast.error("Erro na remoção do produto")
     }
   };
 
@@ -64,7 +83,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     try {
       // TODO
     } catch {
-      // TODO
+      toast.error("Erro na alteração de quantidade do produto")
     }
   };
 
