@@ -66,11 +66,13 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const removeProduct = (productId: number) => {
     try {
-      const newCart = cart.filter(product => {
-        return product.id !== productId;
-      })
+      const newCart = cart.filter(product => (
+        product.id !== productId
+      ))
+
       setCart(newCart);
       localStorage.setItem('@RocketShoes:cart', JSON.stringify(newCart));
+
     } catch {
       toast.error("Erro na remoção do produto")
     }
